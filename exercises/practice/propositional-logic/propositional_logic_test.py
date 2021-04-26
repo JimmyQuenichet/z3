@@ -1,6 +1,6 @@
 import unittest
 from z3 import *
-from propositional_logic import *
+from .propositional_logic import *
 
 class PropositionalLogicTest(unittest.TestCase):
     def test_A_B(self):
