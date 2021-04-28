@@ -1,87 +1,63 @@
 import unittest
-from z3 import*
-from calc_hand import calc_winning_hand
+from z3 import *
 
-class BowlingScoreTest(unittest.TestCase):
-    def test_all_zeros(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 0)
+from calc_hand import (
+    fewest_coins,
+)
 
-    def test_all_strikes(self):
-        pins_per_roll = (10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10)
-        self.assertEqual(bowlingScore(pins_per_roll), 300)
+# Tests adapted from `problem-specifications//canonical-data.json`
 
-    def test_tenth_frame_all_strikes(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 10)
-        self.assertEqual(bowlingScore(pins_per_roll), 30)
+def format_answer(arr):
+    s = Solver()
+    for i in arr:
+        s.add(Int(i))
+    pass
 
-    def test_tenth_frame_first_two_strikes(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 2)
-        self.assertEqual(bowlingScore(pins_per_roll), 22)
 
-    def test_tenth_frame_first_one_strike(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 2, 2)
-        self.assertEqual(bowlingScore(pins_per_roll), 14)
+class ChangeTest(unittest.TestCase):
+    def test_single_coin_change(self):
+        self.assertEqual(fewest_coins([1, 5, 10, 25, 100], 25), format_answer[25])
 
-    def test_tenth_frame_strike_spare(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 2, 8)
-        self.assertEqual(bowlingScore(pins_per_roll), 20)
+    def test_multiple_coin_change(self):
+        self.assertEqual(fewest_coins([1, 5, 10, 25, 100], 15), [5, 10])
 
-    def test_tenth_frame_spare_strike(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 8, 10)
-        self.assertEqual(bowlingScore(pins_per_roll), 20)
+    def test_change_with_lilliputian_coins(self):
+        self.assertEqual(fewest_coins([1, 4, 15, 20, 50], 23), [4, 4, 15])
 
-    def test_tenth_frame_spare(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 8, 6)
-        self.assertEqual(bowlingScore(pins_per_roll), 16)
+    def test_change_with_lower_elbonia_coins(self):
+        self.assertEqual(fewest_coins([1, 5, 10, 21, 25], 63), [21, 21, 21])
 
-    def test_consecutive_strikes(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 10, 0, 0, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 65)
+    def test_large_target_values(self):
+        self.assertEqual(
+            fewest_coins([1, 2, 5, 10, 20, 50, 100], 999),
+            [2, 2, 5, 20, 20, 50, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+        )
 
-    def test_consecutive_strikes_followed_by_number(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 10, 7, 1, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 88)
+    def test_possible_change_without_unit_coins_available(self):
+        self.assertEqual(fewest_coins([2, 5, 10, 20, 50], 21), [2, 2, 2, 5, 10])
 
-    def test_strike_strike_spare(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 5, 5, 0, 0, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 60)
+    def test_another_possible_change_without_unit_coins_available(self):
+        self.assertEqual(fewest_coins([4, 5], 27), [4, 4, 4, 5, 5, 5])
 
-    def test_strike_strike_spare_followed_by_number(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 5, 5, 7, 1, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 75)
+    def test_no_coins_make_0_change(self):
+        self.assertEqual(fewest_coins([1, 5, 10, 21, 25], 0), [])
 
-    def test_consecutive_spares(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 2, 7, 4, 6, 0, 0, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 36)
+    def test_error_testing_for_change_smaller_than_the_smallest_of_coins(self):
+        with self.assertRaisesWithMessage(ValueError):
+            fewest_coins([5, 10], 3)
 
-    def test_consecutive_spares_followed_by_number(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 5, 5, 2, 7, 4, 6, 7, 1, 0, 0, 0, 5)
-        self.assertEqual(bowlingScore(pins_per_roll), 51)
+    def test_error_if_no_combination_can_add_up_to_target(self):
+        with self.assertRaisesWithMessage(ValueError):
+            fewest_coins([5, 10], 94)
 
-    def test_single_strike(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 10)
+    def test_cannot_find_negative_change_values(self):
+        with self.assertRaisesWithMessage(ValueError):
+            fewest_coins([1, 2, 5], -5)
 
-    def test_single_strike_followed_by_number(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 5, 3, 0, 0, 0, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 26)
+    # Utility functions
+    def assertRaisesWithMessage(self, exception):
+        return self.assertRaisesRegex(exception, r".+")
 
-    def test_single_spare(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7, 0, 0, 0, 0, 0, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 10)
-
-    def test_single_spare_followed_by_number(self):
-        pins_per_roll = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 7, 5, 3, 0, 0, 0, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 23)
-
-    def test_all_open_frames(self):
-        pins_per_roll = (1, 2, 3, 4, 5, 4, 3, 2, 1, 0, 1, 2, 3, 4, 5, 4, 3, 2, 1, 0)
-        self.assertEqual(bowlingScore(pins_per_roll), 50)
-
-    def test_all_open_frames(self):
-        pins_per_roll = (5, 3, 8, 2, 3, 4, 8, 0, 10, 4, 4, 2, 6, 7, 2, 6, 1, 9, 0)
-        self.assertEqual()
 
 if __name__ == "__main__":
     unittest.main()
