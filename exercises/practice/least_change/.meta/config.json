@@ -13,7 +13,7 @@
       "least_change_test.py"
     ],
     "example": [
-      ".meta/quadratic_roots_example.py"
+      ".meta/least_change_example.py"
     ]
   },
   "source": "This is an exercise to introduce users to interacting with numbers and models in Z3",
